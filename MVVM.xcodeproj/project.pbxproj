@@ -101,6 +101,7 @@
 				76AD0D9B2010DFEE00C99F19 /* Resources */,
 				DD7FBE920F830007E72E96D2 /* [CP] Embed Pods Frameworks */,
 				6E108E7B3B4BC3B1334D8AEF /* [CP] Copy Pods Resources */,
+				76F871E52010E53E00DA9D0B /* Lint Code */,
 			);
 			buildRules = (
 			);
@@ -173,6 +174,20 @@
 			shellPath = /bin/sh;
 			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-MVVM/Pods-MVVM-resources.sh\"\n";
 			showEnvVarsInLog = 0;
+		};
+		76F871E52010E53E00DA9D0B /* Lint Code */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Lint Code";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "${PODS_ROOT}/SwiftLint/swiftlint";
 		};
 		7E58A1DA121D955279EE3C92 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;

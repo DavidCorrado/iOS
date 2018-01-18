@@ -6,5 +6,9 @@ target 'MVVM' do
   use_frameworks!
 
   # Pods for MVVM
-
+  pod 'RxSwift',    '4.1.1'
+  pod 'RxCocoa',    '4.1.1'
+  pod 'Alamofire',  '4.6.0'
+  pod 'SwiftLint',  '0.24.2'
+  pod 'Swinject',   '2.1.1'
 end
