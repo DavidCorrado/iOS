@@ -8,6 +8,10 @@
 
 /* Begin PBXBuildFile section */
 		0C45E9C512077DE96EEDA153 /* Pods_MVVM.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 63142586B6B0B426078E3979 /* Pods_MVVM.framework */; };
+		7650E64A201770A500005F12 /* Task.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7650E649201770A500005F12 /* Task.swift */; };
+		7650E64C201774DD00005F12 /* Repository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7650E64B201774DD00005F12 /* Repository.swift */; };
+		7650E64E201778DF00005F12 /* TaskRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7650E64D201778DF00005F12 /* TaskRepository.swift */; };
+		7650E6502017799D00005F12 /* TaskDatabaseRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7650E64F2017799D00005F12 /* TaskDatabaseRepository.swift */; };
 		76AD0DA12010DFEE00C99F19 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76AD0DA02010DFEE00C99F19 /* AppDelegate.swift */; };
 		76AD0DA32010DFEE00C99F19 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76AD0DA22010DFEE00C99F19 /* ViewController.swift */; };
 		76AD0DA62010DFEE00C99F19 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 76AD0DA42010DFEE00C99F19 /* Main.storyboard */; };
@@ -17,6 +21,10 @@
 
 /* Begin PBXFileReference section */
 		63142586B6B0B426078E3979 /* Pods_MVVM.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_MVVM.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		7650E649201770A500005F12 /* Task.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Task.swift; sourceTree = "<group>"; };
+		7650E64B201774DD00005F12 /* Repository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Repository.swift; sourceTree = "<group>"; };
+		7650E64D201778DF00005F12 /* TaskRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskRepository.swift; sourceTree = "<group>"; };
+		7650E64F2017799D00005F12 /* TaskDatabaseRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskDatabaseRepository.swift; sourceTree = "<group>"; };
 		76AD0D9D2010DFEE00C99F19 /* MVVM.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MVVM.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		76AD0DA02010DFEE00C99F19 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		76AD0DA22010DFEE00C99F19 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -48,6 +56,17 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
+		7650E6482017708F00005F12 /* Data */ = {
+			isa = PBXGroup;
+			children = (
+				7650E649201770A500005F12 /* Task.swift */,
+				7650E64B201774DD00005F12 /* Repository.swift */,
+				7650E64D201778DF00005F12 /* TaskRepository.swift */,
+				7650E64F2017799D00005F12 /* TaskDatabaseRepository.swift */,
+			);
+			path = Data;
+			sourceTree = "<group>";
+		};
 		76AD0D942010DFED00C99F19 = {
 			isa = PBXGroup;
 			children = (
@@ -69,6 +88,7 @@
 		76AD0D9F2010DFEE00C99F19 /* MVVM */ = {
 			isa = PBXGroup;
 			children = (
+				7650E6482017708F00005F12 /* Data */,
 				76AD0DA02010DFEE00C99F19 /* AppDelegate.swift */,
 				76AD0DA22010DFEE00C99F19 /* ViewController.swift */,
 				76AD0DA42010DFEE00C99F19 /* Main.storyboard */,
@@ -239,7 +259,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				76AD0DA32010DFEE00C99F19 /* ViewController.swift in Sources */,
+				7650E6502017799D00005F12 /* TaskDatabaseRepository.swift in Sources */,
+				7650E64A201770A500005F12 /* Task.swift in Sources */,
 				76AD0DA12010DFEE00C99F19 /* AppDelegate.swift in Sources */,
+				7650E64C201774DD00005F12 /* Repository.swift in Sources */,
+				7650E64E201778DF00005F12 /* TaskRepository.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
