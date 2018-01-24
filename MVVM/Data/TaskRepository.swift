@@ -9,8 +9,8 @@
 import Foundation
 
 class TaskRepository: Repository {
-    func find(identifer: Int) -> Task {
-        return Task(identifer: 1, title: "", description: "")
+    func find(identifer: Int) -> Task? {
+        return Task(identifer: 1, title: "", detail: "")
     }
 
     func findAll() -> [Task] {

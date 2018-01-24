@@ -11,5 +11,5 @@ import Foundation
 struct Task {
     let identifer: Int
     let title: String
-    let description: String
+    let detail: String
 }

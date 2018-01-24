@@ -11,4 +11,5 @@ target 'MVVM' do
   pod 'Alamofire',  '4.6.0'
   pod 'SwiftLint',  '0.24.2'
   pod 'Swinject',   '2.1.1'
+  pod 'RealmSwift', '3.1.0'
 end

@@ -1,2 +1,6 @@
 excluded: # paths to ignore during linting. Takes precedence over `included`.
   - Pods
+
+#TODO figure out how to not force try with realm
+disabled_rules: # rule identifiers to exclude from running
+  - force_try
