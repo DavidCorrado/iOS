@@ -1,10 +1,10 @@
 PODS:
   - Alamofire (4.6.0)
-  - Realm (3.1.0):
-    - Realm/Headers (= 3.1.0)
-  - Realm/Headers (3.1.0)
-  - RealmSwift (3.1.0):
-    - Realm (= 3.1.0)
+  - Realm (10.16.0):
+    - Realm/Headers (= 10.16.0)
+  - Realm/Headers (10.16.0)
+  - RealmSwift (10.16.0):
+    - Realm (= 10.16.0)
   - RxCocoa (4.1.1):
     - RxSwift (~> 4.0)
   - RxSwift (4.1.1)
@@ -13,21 +13,31 @@ PODS:
 
 DEPENDENCIES:
   - Alamofire (= 4.6.0)
-  - RealmSwift (= 3.1.0)
+  - RealmSwift (= 10.16.0)
   - RxCocoa (= 4.1.1)
   - RxSwift (= 4.1.1)
   - SwiftLint (= 0.24.2)
   - Swinject (= 2.1.1)
 
+SPEC REPOS:
+  trunk:
+    - Alamofire
+    - Realm
+    - RealmSwift
+    - RxCocoa
+    - RxSwift
+    - SwiftLint
+    - Swinject
+
 SPEC CHECKSUMS:
   Alamofire: f41a599bd63041760b26d393ec1069d9d7b917f4
-  Realm: 09513d7c054678d65cd02ce09871f805b0d758ac
-  RealmSwift: e868fee9b10e5490ad94b6b6ecd9027944da1824
+  Realm: b6027801398f3743fc222f096faa85281b506e6c
+  RealmSwift: b02a3d0e4947955da960b642c98ad3a461fc4e70
   RxCocoa: fd0862fd2df95fa55562ad28ffd2522c25eb4a85
   RxSwift: c6e3b1c7b325c7d121cd4327e9d98b7ed746b570
   SwiftLint: 2aa21b96c8d13396a051bc1cb659d2ce1e0075b0
   Swinject: afea49fd95f392b41171669f165842879c48fad6
 
-PODFILE CHECKSUM: 45f9a0191c7ba01823ec94da30b0ef13e4742f01
+PODFILE CHECKSUM: 249997921c9ddb4a5881198170edae50259f15ea
 
-COCOAPODS: 1.4.0
+COCOAPODS: 1.10.1
