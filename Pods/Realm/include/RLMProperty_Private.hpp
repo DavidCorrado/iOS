@@ -18,12 +18,18 @@
 
 #import <Realm/RLMProperty_Private.h>
 
-#import "property.hpp"
+#import <realm/object-store/property.hpp>
+
+@class RLMSchema;
 
 @interface RLMProperty ()
 
 + (instancetype)propertyForObjectStoreProperty:(const realm::Property&)property;
 
-- (realm::Property)objectStoreCopy;
+- (realm::Property)objectStoreCopy:(RLMSchema *)schema;
 
 @end
+
+static inline bool isNullable(const realm::PropertyType& t) {
+    return t != realm::PropertyType::Mixed && is_nullable(t);
+}

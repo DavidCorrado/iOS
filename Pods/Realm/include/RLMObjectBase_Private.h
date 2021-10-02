@@ -18,11 +18,16 @@
 
 #import <Realm/RLMObjectBase.h>
 
+@class RLMArray<RLMObjectType>;
+
 NS_ASSUME_NONNULL_BEGIN
 
 // RLMObjectBase private
 @interface RLMObjectBase ()
+@property (nonatomic, nullable) NSMutableArray *lastAccessedNames;
+
 + (void)initializeLinkedObjectSchemas;
++ (bool)isEmbedded;
 @end
 
 NS_ASSUME_NONNULL_END

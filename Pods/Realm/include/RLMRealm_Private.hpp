@@ -20,15 +20,26 @@
 
 #import "RLMClassInfo.hpp"
 
+#import <realm/object-store/object_schema.hpp>
+
 namespace realm {
     class Group;
     class Realm;
 }
+struct RLMResultsSetInfo {
+    realm::ObjectSchema osObjectSchema;
+    RLMObjectSchema *rlmObjectSchema;
+    RLMClassInfo info;
+
+    RLMResultsSetInfo(__unsafe_unretained RLMRealm *const realm);
+    static RLMClassInfo& get(__unsafe_unretained RLMRealm *const realm);
+};
 
 @interface RLMRealm () {
     @public
     std::shared_ptr<realm::Realm> _realm;
     RLMSchemaInfo _info;
+    std::unique_ptr<RLMResultsSetInfo> _resultsSetInfo;
 }
 
 // FIXME - group should not be exposed

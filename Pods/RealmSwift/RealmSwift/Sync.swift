@@ -17,44 +17,50 @@
 ////////////////////////////////////////////////////////////////////////////
 
 import Realm
-import Foundation
+import Realm.Private
+
+#if !(os(iOS) && (arch(i386) || arch(arm)))
+import Combine
+#endif
 
 /**
- An object representing a Realm Object Server user.
+ An object representing a MongoDB Realm user.
 
- - see: `RLMSyncUser`
+ - see: `RLMUser`
  */
-public typealias SyncUser = RLMSyncUser
+public typealias User = RLMUser
+
+public extension User {
+    /// Links the currently authenticated user with a new identity, where the identity is defined by the credential
+    /// specified as a parameter. This will only be successful if this `User` is the currently authenticated
+    /// with the client from which it was created. On success a new user will be returned with the new linked credentials.
+    /// @param credentials The `Credentials` used to link the user to a new identity.
+    /// @completion A completion that eventually return `Result.success(User)` with user's data or `Result.failure(Error)`.
+    func linkUser(credentials: Credentials, _ completion: @escaping (Result<User, Error>) -> Void) {
+        self.__linkUser(with: ObjectiveCSupport.convert(object: credentials)) { user, error in
+            if let user = user {
+                completion(.success(user))
+            } else {
+                completion(.failure(error ?? Realm.Error.callFailed))
+            }
+        }
+    }
+}
 
 /**
- An immutable data object representing information retrieved from the Realm Object
- Server about a particular user.
-
- - see: `RLMSyncUserInfo`
- */
-public typealias SyncUserInfo = RLMSyncUserInfo
-
-/**
- An immutable data object representing an account belonging to a particular user.
-
- - see: `SyncUserInfo`, `RLMSyncUserAccountInfo`
- */
-public typealias SyncUserAccountInfo = RLMSyncUserAccountInfo
-
-/**
- A singleton which configures and manages the Realm Object Server synchronization-related
+ A manager which configures and manages MongoDB Realm synchronization-related
  functionality.
 
  - see: `RLMSyncManager`
  */
 public typealias SyncManager = RLMSyncManager
 
-extension SyncManager {
-    /// The sole instance of the singleton.
-    public static var shared: SyncManager {
-        return __shared()
-    }
-}
+/**
+ Options for configuring timeouts and intervals in the sync client.
+
+  - see: `RLMSyncTimeoutOptions`
+ */
+public typealias SyncTimeoutOptions = RLMSyncTimeoutOptions
 
 /**
  A session object which represents communication between the client and server for a specific
@@ -155,13 +161,6 @@ extension SyncError {
 public typealias SyncAuthError = RLMSyncAuthError
 
 /**
- An error associated with retrieving or modifying user permissions to access a synchronized Realm.
-
- - see: `RLMSyncPermissionError`
- */
-public typealias SyncPermissionError = RLMSyncPermissionError
-
-/**
  An enum which can be used to specify the level of logging.
 
  - see: `RLMSyncLogLevel`
@@ -170,27 +169,58 @@ public typealias SyncLogLevel = RLMSyncLogLevel
 
 /**
  A data type whose values represent different authentication providers that can be used with
- the Realm Object Server.
+ MongoDB Realm.
 
  - see: `RLMIdentityProvider`
  */
 public typealias Provider = RLMIdentityProvider
 
 /**
- A `SyncConfiguration` represents configuration parameters for Realms intended to sync with
- a Realm Object Server.
+ * How the Realm client should validate the identity of the server for secure connections.
+ *
+ * By default, when connecting to MongoDB Realm over HTTPS, Realm will
+ * validate the server's HTTPS certificate using the system trust store and root
+ * certificates. For additional protection against man-in-the-middle (MITM)
+ * attacks and similar vulnerabilities, you can pin a certificate or public key,
+ * and reject all others, even if they are signed by a trusted CA.
  */
-public struct SyncConfiguration {
+@frozen public enum ServerValidationPolicy {
+    /// Perform no validation and accept potentially invalid certificates.
+    ///
+    /// - warning: DO NOT USE THIS OPTION IN PRODUCTION.
+    case none
+
+    /// Use the default server trust evaluation based on the system-wide CA
+    /// store. Any certificate signed by a trusted CA will be accepted.
+    case system
+
+    /// Use a specific pinned certificate to validate the server identify.
+    ///
+    /// This will only connect to a server if one of the server certificates
+    /// matches the certificate stored at the given local path and that
+    /// certificate has a valid trust chain.
+    ///
+    /// On macOS, the certificate files may be in any of the formats supported
+    /// by SecItemImport(), including PEM and .cer (see SecExternalFormat for a
+    /// complete list of possible formats). On iOS and other platforms, only
+    /// DER .cer files are supported.
+    case pinCertificate(path: URL)
+}
+
+/**
+ A `SyncConfiguration` represents configuration parameters for Realms intended to sync with
+ MongoDB Realm.
+ */
+@frozen public struct SyncConfiguration {
     /// The `SyncUser` who owns the Realm that this configuration should open.
-    public let user: SyncUser
+    public let user: User
 
     /**
-     The URL of the Realm on the Realm Object Server that this configuration should open.
-
-     - warning: The URL must be absolute (e.g. `realms://example.com/~/foo`), and cannot end with
-                `.realm`, `.realm.lock` or `.realm.management`.
+     The value this Realm is partitioned on. The partition key is a property defined in
+     MongoDB Realm. All classes with a property with this value will be synchronized to the
+     Realm.
      */
-    public let realmURL: URL
+    public let partitionValue: AnyBSON?
 
     /**
      A policy that determines what should happen when all references to Realms opened by this
@@ -199,37 +229,141 @@ public struct SyncConfiguration {
     internal let stopPolicy: RLMSyncStopPolicy
 
     /**
-     Whether the SSL certificate of the Realm Object Server should be validated.
+     By default, Realm.asyncOpen() swallows non-fatal connection errors such as
+     a connection attempt timing out and simply retries until it succeeds. If
+     this is set to `true`, instead the error will be reported to the callback
+     and the async open will be cancelled.
      */
-    public let enableSSLValidation: Bool
-
-    /**
-     Whether this Realm should be opened in 'partial synchronization' mode.
-     Partial synchronization mode means that no objects are synchronized from the remote Realm
-     except those matching queries that the user explicitly specifies.
-
-     -warning: Partial synchronization is a tech preview. Its APIs are subject to change.
-     */
-    public let isPartial: Bool
+    public let cancelAsyncOpenOnNonFatalErrors: Bool
 
     internal init(config: RLMSyncConfiguration) {
         self.user = config.user
-        self.realmURL = config.realmURL
         self.stopPolicy = config.stopPolicy
-        self.enableSSLValidation = config.enableSSLValidation
-        self.isPartial = config.isPartial
+        self.partitionValue = ObjectiveCSupport.convert(object: config.partitionValue)
+        self.cancelAsyncOpenOnNonFatalErrors = config.cancelAsyncOpenOnNonFatalErrors
     }
 
     func asConfig() -> RLMSyncConfiguration {
-        let config = RLMSyncConfiguration(user: user, realmURL: realmURL)
-        config.stopPolicy = stopPolicy
-        config.enableSSLValidation = enableSSLValidation
-        config.isPartial = isPartial
-        return config
+        let c = RLMSyncConfiguration(user: user,
+                                     partitionValue: partitionValue.map(ObjectiveCSupport.convertBson),
+                                     stopPolicy: stopPolicy)
+        c.cancelAsyncOpenOnNonFatalErrors = cancelAsyncOpenOnNonFatalErrors
+        return c
+    }
+}
+
+/// Structure providing an interface to call a MongoDB Realm function with the provided name and arguments.
+///
+///     user.functions.sum([1, 2, 3, 4, 5]) { sum, error in
+///         guard case let .int64(value) = sum else {
+///             print(error?.localizedDescription)
+///         }
+///
+///         assert(value == 15)
+///     }
+///
+/// The dynamic member name (`sum` in the above example) is directly associated with the function name.
+/// The first argument is the `BSONArray` of arguments to be provided to the function.
+/// The second and final argument is the completion handler to call when the function call is complete.
+/// This handler is executed on a non-main global `DispatchQueue`.
+@dynamicMemberLookup
+@frozen public struct Functions {
+
+    private let user: User
+
+    fileprivate init(user: User) {
+        self.user = user
     }
 
+    /// A closure type for receiving the completion of a remote function call.
+    public typealias FunctionCompletionHandler = (AnyBSON?, Error?) -> Void
+
+    /// A closure type for the dynamic remote function type.
+    public typealias Function = ([AnyBSON], @escaping FunctionCompletionHandler) -> Void
+
+    /// The implementation of @dynamicMemberLookup that allows for dynamic remote function calls.
+    public subscript(dynamicMember string: String) -> Function {
+        return { (arguments: [AnyBSON], completionHandler: @escaping FunctionCompletionHandler) in
+            let objcArgs = arguments.map(ObjectiveCSupport.convertBson)
+            self.user.__callFunctionNamed(string, arguments: objcArgs) { (bson: RLMBSON?, error: Error?) in
+                completionHandler(bson.map(ObjectiveCSupport.convertBson) ?? .none, error)
+            }
+        }
+    }
+
+    /// A closure type for receiving the completion result of a remote function call.
+    public typealias ResultFunctionCompletionHandler = (Result<AnyBSON, Error>) -> Void
+
+    /// A closure type for the dynamic remote function type.
+    public typealias ResultFunction = ([AnyBSON], @escaping ResultFunctionCompletionHandler) -> Void
+
+    /// The implementation of @dynamicMemberLookup that allows for dynamic remote function calls with a `ResultFunctionCompletionHandler` completion.
+    public subscript(dynamicMember string: String) -> ResultFunction {
+        return { (arguments: [AnyBSON], completionHandler: @escaping ResultFunctionCompletionHandler) in
+            let objcArgs = arguments.map(ObjectiveCSupport.convertBson)
+            self.user.__callFunctionNamed(string, arguments: objcArgs) { (bson: RLMBSON?, error: Error?) in
+                if let b = bson.map(ObjectiveCSupport.convertBson), let bson = b {
+                    completionHandler(.success(bson))
+                } else {
+                    completionHandler(.failure(error ?? Realm.Error.callFailed))
+                }
+            }
+        }
+    }
+
+    /// The implementation of @dynamicMemberLookup that allows for dynamic remote function calls with a `callable` return.
+    public subscript(dynamicMember string: String) -> FunctionCallable {
+        FunctionCallable(name: string, user: user)
+    }
+}
+
+/// Structure enabling the following syntactic sugar for user functions:
+///
+///     guard case let .int32(sum) = try await user.functions.sum([1, 2, 3, 4, 5]) else {
+///        return
+///     }
+///
+/// The dynamic member name (`sum` in the above example) is provided by `@dynamicMemberLookup`
+/// which is directly associated with the function name.
+@dynamicCallable
+public struct FunctionCallable {
+    fileprivate let name: String
+    fileprivate let user: User
+
+    #if !(os(iOS) && (arch(i386) || arch(arm)))
+    /// The implementation of @dynamicCallable that allows  for `Future<AnyBSON, Error>` callable return.
+    ///
+    ///     let cancellable = user.functions.sum([1, 2, 3, 4, 5])
+    ///        .sink(receiveCompletion: { result in
+    ///     }, receiveValue: { value in
+    ///        // Returned value from function
+    ///     })
+    ///
+    @available(OSX 10.15, watchOS 6.0, iOS 13.0, iOSApplicationExtension 13.0, OSXApplicationExtension 10.15, tvOS 13.0, macCatalyst 13.0, macCatalystApplicationExtension 13.0, *)
+    public func dynamicallyCall(withArguments args: [[AnyBSON]]) -> Future<AnyBSON, Error> {
+        return Future<AnyBSON, Error> { promise in
+            let objcArgs = args.first!.map(ObjectiveCSupport.convertBson)
+            self.user.__callFunctionNamed(name, arguments: objcArgs) { (bson: RLMBSON?, error: Error?) in
+                if let b = bson.map(ObjectiveCSupport.convertBson), let bson = b {
+                    promise(.success(bson))
+                } else {
+                    promise(.failure(error ?? Realm.Error.callFailed))
+                }
+            }
+        }
+    }
+    #else
+    /// :nodoc:
+    public func dynamicallyCall(withArguments args: [Never]) {
+        //   noop
+    }
+    #endif
+}
+
+public extension User {
+
     /**
-     Initialize a sync configuration with a user and a Realm URL.
+     Create a sync configuration instance.
 
      Additional settings can be optionally specified. Descriptions of these
      settings follow.
@@ -237,244 +371,117 @@ public struct SyncConfiguration {
      `enableSSLValidation` is true by default. It can be disabled for debugging
      purposes.
 
-     - warning: The URL must be absolute (e.g. `realms://example.com/~/foo`), and cannot end with
-                `.realm`, `.realm.lock` or `.realm.management`.
+     - warning: NEVER disable SSL validation for a system running in production.
+     */
+    func configuration<T: BSON>(partitionValue: T) -> Realm.Configuration {
+        let config = self.__configuration(withPartitionValue: ObjectiveCSupport.convert(object: AnyBSON(partitionValue)))
+        return ObjectiveCSupport.convert(object: config)
+    }
+
+    /**
+     Create a sync configuration instance.
+
+     - parameter partitionValue: Takes `nil` as a partition value.
+     - parameter cancelAsyncOpenOnNonFatalErrors: By default, Realm.asyncOpen()
+     swallows non-fatal connection errors such as a connection attempt timing
+     out and simply retries until it succeeds. If this is set to `true`, instead
+     the error will be reported to the callback and the async open will be
+     cancelled.
 
      - warning: NEVER disable SSL validation for a system running in production.
      */
-    public init(user: SyncUser, realmURL: URL, enableSSLValidation: Bool = true, isPartial: Bool = false) {
-        self.user = user
-        self.realmURL = realmURL
-        self.stopPolicy = .afterChangesUploaded
-        self.enableSSLValidation = enableSSLValidation
-        self.isPartial = isPartial
+    func configuration(partitionValue: AnyBSON,
+                       cancelAsyncOpenOnNonFatalErrors: Bool = false) -> Realm.Configuration {
+        let config = self.__configuration(withPartitionValue: ObjectiveCSupport.convert(object: partitionValue))
+        let syncConfig = config.syncConfiguration!
+        syncConfig.cancelAsyncOpenOnNonFatalErrors = cancelAsyncOpenOnNonFatalErrors
+        config.syncConfiguration = syncConfig
+        return ObjectiveCSupport.convert(object: config)
+    }
+
+    /**
+     Create a sync configuration instance.
+
+     - parameter partitionValue: The `BSON` value the Realm is partitioned on.
+     - parameter cancelAsyncOpenOnNonFatalErrors: By default, Realm.asyncOpen()
+     swallows non-fatal connection errors such as a connection attempt timing
+     out and simply retries until it succeeds. If this is set to `true`, instead
+     the error will be reported to the callback and the async open will be
+     cancelled.
+
+     - warning: NEVER disable SSL validation for a system running in production.
+     */
+    func configuration<T: BSON>(partitionValue: T,
+                                cancelAsyncOpenOnNonFatalErrors: Bool = false) -> Realm.Configuration {
+        let config = self.__configuration(withPartitionValue: ObjectiveCSupport.convert(object: AnyBSON(partitionValue)))
+        let syncConfig = config.syncConfiguration!
+        syncConfig.cancelAsyncOpenOnNonFatalErrors = cancelAsyncOpenOnNonFatalErrors
+        config.syncConfiguration = syncConfig
+        return ObjectiveCSupport.convert(object: config)
+    }
+
+    /**
+     The custom data of the user.
+     This is configured in your MongoDB Realm App.
+    */
+    var customData: Document {
+        guard let rlmCustomData = self.__customData as RLMBSON?,
+            let anyBSON = ObjectiveCSupport.convert(object: rlmCustomData),
+            case let .document(customData) = anyBSON else {
+            return [:]
+        }
+
+        return customData
+    }
+
+    /// A client for interacting with a remote MongoDB instance
+    /// - Parameter serviceName:  The name of the MongoDB service
+    /// - Returns: A `MongoClient` which is used for interacting with a remote MongoDB service
+    func mongoClient(_ serviceName: String) -> MongoClient {
+        return self.__mongoClient(withServiceName: serviceName)
+    }
+
+    /// Call a MongoDB Realm function with the provided name and arguments.
+    ///
+    ///     user.functions.sum([1, 2, 3, 4, 5]) { sum, error in
+    ///         guard case let .int64(value) = sum else {
+    ///             print(error?.localizedDescription)
+    ///         }
+    ///
+    ///         assert(value == 15)
+    ///     }
+    ///
+    /// The dynamic member name (`sum` in the above example) is directly associated with the function name.
+    /// The first argument is the `BSONArray` of arguments to be provided to the function.
+    /// The second and final argument is the completion handler to call when the function call is complete.
+    /// This handler is executed on a non-main global `DispatchQueue`.
+    var functions: Functions {
+        return Functions(user: self)
     }
 }
-
-/// A `SyncCredentials` represents data that uniquely identifies a Realm Object Server user.
-public struct SyncCredentials {
-    public typealias Token = String
-
-    internal var token: Token
-    internal var provider: Provider
-    internal var userInfo: [String: Any]
-
-    /**
-     Initialize new credentials using a custom token, authentication provider, and user information
-     dictionary. In most cases, the convenience initializers should be used instead.
-     */
-    public init(customToken token: Token, provider: Provider, userInfo: [String: Any] = [:]) {
-        self.token = token
-        self.provider = provider
-        self.userInfo = userInfo
-    }
-
-    internal init(_ credentials: RLMSyncCredentials) {
-        self.token = credentials.token
-        self.provider = credentials.provider
-        self.userInfo = credentials.userInfo
-    }
-
-    /// Initialize new credentials using a Facebook account token.
-    public static func facebook(token: Token) -> SyncCredentials {
-        return SyncCredentials(RLMSyncCredentials(facebookToken: token))
-    }
-
-    /// Initialize new credentials using a Google account token.
-    public static func google(token: Token) -> SyncCredentials {
-        return SyncCredentials(RLMSyncCredentials(googleToken: token))
-    }
-
-    /// Initialize new credentials using a CloudKit account token.
-    public static func cloudKit(token: Token) -> SyncCredentials {
-        return SyncCredentials(RLMSyncCredentials(cloudKitToken: token))
-    }
-
-    /// Initialize new credentials using a Realm Object Server username and password.
-    public static func usernamePassword(username: String,
-                                        password: String,
-                                        register: Bool = false) -> SyncCredentials {
-        return SyncCredentials(RLMSyncCredentials(username: username, password: password, register: register))
-    }
-
-    /// Initialize new credentials using a Realm Object Server access token.
-    public static func accessToken(_ accessToken: String, identity: String) -> SyncCredentials {
-        return SyncCredentials(RLMSyncCredentials(accessToken: accessToken, identity: identity))
-    }
-
-    /// Initialize new credentials using a JSON Web Token.
-    public static func jwt(_ token: Token) -> SyncCredentials {
-        return SyncCredentials(RLMSyncCredentials(jwt: token))
-    }
-
-    /// Initialize new credentials using a nickname.
-    public static func nickname(_ nickname: String, isAdmin: Bool = false) -> SyncCredentials {
-        return SyncCredentials(RLMSyncCredentials(nickname: nickname, isAdmin: isAdmin))
-    }
-
-    /// Initialize new credentials anonymously
-    public static func anonymous() -> SyncCredentials {
-        return SyncCredentials(RLMSyncCredentials.anonymous())
-    }
-}
-
-extension RLMSyncCredentials {
-    internal convenience init(_ credentials: SyncCredentials) {
-        self.init(customToken: credentials.token, provider: credentials.provider, userInfo: credentials.userInfo)
-    }
-}
-
-extension SyncUser {
-    /**
-     Log in a user and asynchronously retrieve a user object.
-
-     If the log in completes successfully, the completion block will be called, and a
-     `SyncUser` representing the logged-in user will be passed to it. This user object
-     can be used to open `Realm`s and retrieve `SyncSession`s. Otherwise, the
-     completion block will be called with an error.
-
-     - parameter credentials: A `SyncCredentials` object representing the user to log in.
-     - parameter authServerURL: The URL of the authentication server (e.g. "http://realm.example.org:9080").
-     - parameter timeout: How long the network client should wait, in seconds, before timing out.
-     - parameter callbackQueue: The dispatch queue upon which the callback should run. Defaults to the main queue.
-     - parameter completion: A callback block to be invoked once the log in completes.
-     */
-    public static func logIn(with credentials: SyncCredentials,
-                             server authServerURL: URL,
-                             timeout: TimeInterval = 30,
-                             callbackQueue queue: DispatchQueue = DispatchQueue.main,
-                             onCompletion completion: @escaping UserCompletionBlock) {
-        return SyncUser.__logIn(with: RLMSyncCredentials(credentials),
-                                authServerURL: authServerURL,
-                                timeout: timeout,
-                                callbackQueue: queue,
-                                onCompletion: completion)
-    }
-
-    /// A dictionary of all valid, logged-in user identities corresponding to their `SyncUser` objects.
-    public static var all: [String: SyncUser] {
-        return __allUsers()
-    }
-
-    /**
-     The logged-in user. `nil` if none exists. Only use this property if your application expects
-     no more than one logged-in user at any given time.
-
-     - warning: Throws an Objective-C exception if more than one logged-in user exists.
-     */
-    public static var current: SyncUser? {
-        return __current()
-    }
-
-    /**
-     An optional error handler which can be set to notify the host application when
-     the user encounters an error.
-     
-     - note: Check for `.invalidAccessToken` to see if the user has been remotely logged
-             out because its refresh token expired, or because the third party authentication
-             service providing the user's identity has logged the user out.
-
-     - warning: Regardless of whether an error handler is defined, certain user errors
-                will automatically cause the user to enter the logged out state.
-     */
-    @nonobjc public var errorHandler: ((SyncUser, SyncAuthError) -> Void)? {
-        get {
-            return __errorHandler
-        }
-        set {
-            if let newValue = newValue {
-                __errorHandler = { (user, error) in
-                    newValue(user, error as! SyncAuthError)
-                }
-            } else {
-                __errorHandler = nil
-            }
-        }
-    }
-
-    /**
-     Retrieve permissions for this user. Permissions describe which synchronized
-     Realms this user has access to and what they are allowed to do with them.
-
-     Permissions are retrieved asynchronously and returned via the callback. The
-     callback is run on the same thread that the method is invoked upon.
-
-     - warning: This method must be invoked on a thread with an active run loop.
-
-     - warning: Do not pass the `Results` returned by the callback between threads.
-
-     - parameter callback: A callback providing either a `Results` containing the
-                           permissions, or an error describing what went wrong.
-     */
-    public func retrievePermissions(callback: @escaping (SyncPermissionResults?, SyncPermissionError?) -> Void) {
-        self.__retrievePermissions { (results, error) in
-            guard let results = results else {
-                callback(nil, error as! SyncPermissionError?)
-                return
-            }
-            let upcasted: RLMResults<SyncPermission> = results
-            callback(Results(upcasted as! RLMResults<AnyObject>), nil)
-        }
-    }
-
-    /**
-     Create a permission offer for a Realm.
-
-     A permission offer is used to grant access to a Realm this user manages to another
-     user. Creating a permission offer produces a string token which can be passed to the
-     recepient in any suitable way (for example, via e-mail).
-
-     The operation will take place asynchronously. The token can be accepted by the recepient
-     using the `SyncUser.acceptOffer(forToken:, callback:)` method.
-
-     - parameter url: The URL of the Realm for which the permission offer should pertain. This
-                      may be the URL of any Realm which this user is allowed to manage. If the URL
-                      has a `~` wildcard it will be replaced with this user's user identity.
-     - parameter accessLevel: What access level to grant to whoever accepts the token.
-     - parameter expiration: Optionally, a date which indicates when the offer expires. If the
-                             recepient attempts to accept the offer after the date it will be rejected.
-                             If nil, the offer will never expire.
-     - parameter callback: A callback indicating whether the operation succeeded or failed. If it
-                           succeeded the token will be passed in as a string.
-     */
-    public func createOfferForRealm(at url: URL,
-                                    accessLevel: SyncAccessLevel,
-                                    expiration: Date? = nil,
-                                    callback: @escaping (String?, SyncPermissionError?) -> Void) {
-        self.__createOfferForRealm(at: url, accessLevel: accessLevel, expiration: expiration) { (token, error) in
-            guard let token = token else {
-                callback(nil, error as! SyncPermissionError?)
-                return
-            }
-            callback(token, nil)
-        }
-    }
-}
-
-/**
- A value which represents a permission granted to a user to interact
- with a Realm. These values are passed into APIs on `SyncUser`, and
- returned from `SyncPermissionResults`.
-
- - see: `RLMSyncPermission`
- */
-public typealias SyncPermission = RLMSyncPermission
-
-/**
- An enumeration describing possible access levels.
-
- - see: `RLMSyncAccessLevel`
- */
-public typealias SyncAccessLevel = RLMSyncAccessLevel
 
 public extension SyncSession {
+    /**
+     The current state of the session represented by a session object.
+
+     - see: `RLMSyncSessionState`
+     */
+    typealias State = RLMSyncSessionState
+
+    /**
+     The current state of a sync session's connection.
+
+     - see: `RLMSyncConnectionState`
+     */
+    typealias ConnectionState = RLMSyncConnectionState
+
     /**
      The transfer direction (upload or download) tracked by a given progress notification block.
 
      Progress notification blocks can be registered on sessions if your app wishes to be informed
      how many bytes have been uploaded or downloaded, for example to show progress indicator UIs.
      */
-    public enum ProgressDirection {
+    enum ProgressDirection {
         /// For monitoring upload progress.
         case upload
         /// For monitoring download progress.
@@ -487,7 +494,7 @@ public extension SyncSession {
      Progress notification blocks can be registered on sessions if your app wishes to be informed
      how many bytes have been uploaded or downloaded, for example to show progress indicator UIs.
      */
-    public enum ProgressMode {
+    enum ProgressMode {
         /**
          The block will be called forever, or until it is unregistered by calling
          `ProgressNotificationToken.invalidate()`.
@@ -514,12 +521,12 @@ public extension SyncSession {
      been automatically stopped, calling `invalidate()` does nothing. `invalidate()` should be called
      before the token is destroyed.
      */
-    public typealias ProgressNotificationToken = RLMProgressNotificationToken
+    typealias ProgressNotificationToken = RLMProgressNotificationToken
 
     /**
      A struct encapsulating progress information, as well as useful helper methods.
      */
-    public struct Progress {
+    struct Progress {
         /// The number of bytes that have been transferred.
         public let transferredBytes: Int
 
@@ -550,7 +557,7 @@ public extension SyncSession {
             return transferredBytes >= transferrableBytes
         }
 
-        fileprivate init(transferred: UInt, transferrable: UInt) {
+        internal init(transferred: UInt, transferrable: UInt) {
             transferredBytes = Int(transferred)
             transferrableBytes = Int(transferrable)
         }
@@ -585,9 +592,9 @@ public extension SyncSession {
 
      - see: `ProgressDirection`, `Progress`, `ProgressNotificationToken`
      */
-    public func addProgressNotification(for direction: ProgressDirection,
-                                        mode: ProgressMode,
-                                        block: @escaping (Progress) -> Void) -> ProgressNotificationToken? {
+    func addProgressNotification(for direction: ProgressDirection,
+                                 mode: ProgressMode,
+                                 block: @escaping (Progress) -> Void) -> ProgressNotificationToken? {
         return __addProgressNotification(for: (direction == .upload ? .upload : .download),
                                          mode: (mode == .reportIndefinitely
                                             ? .reportIndefinitely
@@ -598,71 +605,185 @@ public extension SyncSession {
 }
 
 extension Realm {
-    /**
-     If the Realm is a partially synchronized Realm, fetch and synchronize the objects
-     of a given object type that match the given query (in string format).
-
-     The results will be returned asynchronously in the callback.
-     Use `Results.observe(_:)` to be notified to changes to the set of synchronized objects.
-
-     -warning: Partial synchronization is a tech preview. Its APIs are subject to change.
-     */
+    /// :nodoc:
+    @available(*, unavailable, message: "Use Results.subscribe()")
     public func subscribe<T: Object>(to objects: T.Type, where: String,
                                      completion: @escaping (Results<T>?, Swift.Error?) -> Void) {
-        rlmRealm.subscribe(toObjects: objects, where: `where`) { (results, error) in
-            completion(results.map { Results<T>($0) }, error)
+        fatalError()
+    }
+
+    /**
+     Get the SyncSession used by this Realm. Will be nil if this is not a
+     synchronized Realm.
+    */
+    public var syncSession: SyncSession? {
+        return SyncSession(for: rlmRealm)
+    }
+}
+
+#if !(os(iOS) && (arch(i386) || arch(arm)))
+@available(OSX 10.15, watchOS 6.0, iOS 13.0, iOSApplicationExtension 13.0, OSXApplicationExtension 10.15, tvOS 13.0, macCatalyst 13.0, macCatalystApplicationExtension 13.0, *)
+public extension User {
+    /// Refresh a user's custom data. This will, in effect, refresh the user's auth session.
+    /// @returns A publisher that eventually return `Dictionary` with user's data or `Error`.
+    func refreshCustomData() -> Future<[AnyHashable: Any], Error> {
+        return Future { self.refreshCustomData($0) }
+    }
+
+    /// Links the currently authenticated user with a new identity, where the identity is defined by the credential
+    /// specified as a parameter. This will only be successful if this `User` is the currently authenticated
+    /// with the client from which it was created. On success a new user will be returned with the new linked credentials.
+    /// @param credentials The `Credentials` used to link the user to a new identity.
+    /// @returns A publisher that eventually return `Result.success` or `Error`.
+    func linkUser(credentials: Credentials) -> Future<User, Error> {
+        return Future { self.linkUser(credentials: credentials, $0) }
+    }
+
+    /// Removes the user
+    /// This logs out and destroys the session related to this user. The completion block will return an error
+    /// if the user is not found or is already removed.
+    /// @returns A publisher that eventually return `Result.success` or `Error`.
+    func remove() -> Future<Void, Error> {
+        return Future<Void, Error> { promise in
+            self.remove { error in
+                if let error = error {
+                    promise(.failure(error))
+                } else {
+                    promise(.success(()))
+                }
+            }
+        }
+    }
+
+    /// Logs out the current user
+    /// The users state will be set to `Removed` is they are an anonymous user or `LoggedOut` if they are authenticated by a username / password or third party auth clients
+    //// If the logout request fails, this method will still clear local authentication state.
+    /// @returns A publisher that eventually return `Result.success` or `Error`.
+    func logOut() -> Future<Void, Error> {
+        return Future<Void, Error> { promise in
+            self.logOut { error in
+                if let error = error {
+                    promise(.failure(error))
+                } else {
+                    promise(.success(()))
+                }
+            }
         }
     }
 }
 
-// MARK: - Permissions and permission results
+/// :nodoc:
+@available(OSX 10.15, watchOS 6.0, iOS 13.0, iOSApplicationExtension 13.0, OSXApplicationExtension 10.15, tvOS 13.0, macCatalyst 13.0, macCatalystApplicationExtension 13.0, *)
+@frozen public struct UserSubscription: Subscription {
+    private let user: User
+    private let token: RLMUserSubscriptionToken
 
-extension SyncPermission: RealmCollectionValue { }
+    internal init(user: User, token: RLMUserSubscriptionToken) {
+        self.user = user
+        self.token = token
+    }
 
-/**
- A `Results` collection containing sync permission results.
- */
-public typealias SyncPermissionResults = Results<SyncPermission>
+    /// A unique identifier for identifying publisher streams.
+    public var combineIdentifier: CombineIdentifier {
+        return CombineIdentifier(NSNumber(value: token.value))
+    }
 
-/**
- A property upon which a `SyncPermissionResults` can be sorted or queried.
- The raw value string can be used to construct predicates and queries
- manually.
+    /// This function is not implemented.
+    ///
+    /// Realm publishers do not support backpressure and so this function does nothing.
+    public func request(_ demand: Subscribers.Demand) {
+    }
 
- - warning: If building `NSPredicate`s using format strings including these
-            raw values, use `%K` instead of `%@` as the substitution
-            parameter.
-
- - see: `RLMSyncPermissionSortProperty`
- */
-public typealias SyncPermissionSortProperty = RLMSyncPermissionSortProperty
-
-extension SortDescriptor {
-    /**
-     Construct a sort descriptor using a `SyncPermissionSortProperty`.
-     */
-    public init(sortProperty: SyncPermissionSortProperty, ascending: Bool = true) {
-        self.init(keyPath: sortProperty.rawValue, ascending: ascending)
+    /// Stop emitting values on this subscription.
+    public func cancel() {
+        user.unsubscribe(token)
     }
 }
 
-#if swift(>=3.1)
-extension Results where Element == SyncPermission {
-    /**
-     Return a `Results<SyncPermissionValue>` containing the objects represented
-     by the results, but sorted on the specified property.
+/// :nodoc:
+@available(OSX 10.15, watchOS 6.0, iOS 13.0, iOSApplicationExtension 13.0, OSXApplicationExtension 10.15, tvOS 13.0, macCatalyst 13.0, macCatalystApplicationExtension 13.0, *)
+public class UserPublisher: Publisher {
+    /// This publisher cannot fail.
+    public typealias Failure = Never
+    /// This publisher emits User.
+    public typealias Output = User
 
-     - see: `sorted(byKeyPath:, ascending:)`
-     */
-    public func sorted(bySortProperty sortProperty: SyncPermissionSortProperty,
-                       ascending: Bool = true) -> Results<Element> {
-        return sorted(by: [SortDescriptor(sortProperty: sortProperty, ascending: ascending)])
+    private let user: User
+
+    internal init(_ user: User) {
+        self.user = user
+    }
+
+    /// :nodoc:
+    public func receive<S>(subscriber: S) where S: Subscriber, S.Failure == Never, Output == S.Input {
+        let token = user.subscribe { _ in
+            _ = subscriber.receive(self.user)
+        }
+
+        subscriber.receive(subscription: UserSubscription(user: user, token: token))
+    }
+}
+
+@available(OSX 10.15, watchOS 6.0, iOS 13.0, iOSApplicationExtension 13.0, OSXApplicationExtension 10.15, tvOS 13.0, macCatalyst 13.0, macCatalystApplicationExtension 13.0, *)
+extension User: ObservableObject {
+    /// A publisher that emits Void each time the user changes.
+    ///
+    /// Despite the name, this actually emits *after* the user has changed.
+    public var objectWillChange: UserPublisher {
+        return UserPublisher(self)
     }
 }
 #endif
 
-// MARK: - Migration assistance
+public extension User {
+    /// Refresh a user's custom data. This will, in effect, refresh the user's auth session.
+    /// @completion A completion that eventually return `Result.success(Dictionary)` with user's data or `Result.failure(Error)`.
+    func refreshCustomData(_ completion: @escaping (Result<[AnyHashable: Any], Error>) -> Void) {
+        self.refreshCustomData { customData, error in
+            if let customData = customData {
+                completion(.success(customData))
+            } else {
+                completion(.failure(error ?? Realm.Error.callFailed))
+            }
+        }
+    }
+}
 
-/// :nodoc:
-@available(*, unavailable, renamed: "SyncPermission")
-public final class SyncPermissionValue { }
+#if swift(>=5.5) && canImport(_Concurrency)
+@available(macOS 12.0, tvOS 15.0, iOS 15.0, watchOS 8.0, *)
+public extension User {
+    /// Links the currently authenticated user with a new identity, where the identity is defined by the credential
+    /// specified as a parameter. This will only be successful if this `User` is the currently authenticated
+    /// with the client from which it was created. On success a new user will be returned with the new linked credentials.
+    /// - Parameters:
+    ///   - credentials: The `Credentials` used to link the user to a new identity.
+    /// - Returns:A `User` after successfully update its identity.
+    func linkUser(credentials: Credentials) async throws -> User {
+        return try await withCheckedThrowingContinuation { continuation in
+            linkUser(credentials: credentials, continuation.resume)
+        }
+    }
+}
+
+@available(macOS 12.0, tvOS 15.0, iOS 15.0, watchOS 8.0, *)
+extension FunctionCallable {
+    /// The implementation of @dynamicMemberLookup that allows  for `async await` callable return.
+    ///
+    ///     guard case let .int32(sum) = try await user.functions.sum([1, 2, 3, 4, 5]) else {
+    ///        return
+    ///     }
+    ///
+    public func dynamicallyCall(withArguments args: [[AnyBSON]]) async throws -> AnyBSON {
+        try await withCheckedThrowingContinuation { continuation in
+            let objcArgs = args.first!.map(ObjectiveCSupport.convertBson)
+            self.user.__callFunctionNamed(name, arguments: objcArgs) { (bson: RLMBSON?, error: Error?) in
+                if let b = bson.map(ObjectiveCSupport.convertBson), let bson = b {
+                    continuation.resume(returning: bson)
+                } else {
+                    continuation.resume(throwing: error ?? Realm.Error.callFailed)
+                }
+            }
+        }
+    }
+}
+#endif // swift(>=5.5)

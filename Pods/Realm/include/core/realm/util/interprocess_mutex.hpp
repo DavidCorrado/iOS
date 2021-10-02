@@ -25,7 +25,6 @@
 #include <realm/utilities.hpp>
 #include <mutex>
 #include <map>
-#include <iostream>
 
 // Enable this only on platforms where it might be needed
 #if REALM_PLATFORM_APPLE || REALM_ANDROID
@@ -219,6 +218,8 @@ inline void InterprocessMutex::set_shared_part(SharedPart& shared_part, const st
     // Always use mod_Write to open file and retreive the uid in case other process
     // deletes the file.
     m_lock_info->m_file.open(m_filename, File::mode_Write);
+    // exFAT does not allocate a unique id for the file until it's non-empty
+    m_lock_info->m_file.resize(1);
     m_fileuid = m_lock_info->m_file.get_unique_id();
 
     (*s_info_map)[m_fileuid] = m_lock_info;
@@ -235,7 +236,7 @@ inline void InterprocessMutex::set_shared_part(SharedPart& shared_part, const st
     std::wstring wname(name.begin(), name.end());
     m_handle = CreateMutexW(0, false, wname.c_str());
     if (!m_handle) {
-        throw std::system_error(std::error_code(::GetLastError(), std::system_category()), "Error opening mutex");
+        throw std::system_error(GetLastError(), std::system_category(), "Error opening mutex");
     }
 #else
     m_shared_part = &shared_part;

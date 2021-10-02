@@ -80,13 +80,6 @@
 			path = UI;
 			sourceTree = "<group>";
 		};
-		7650E6552018BEF200005F12 /* DI */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = DI;
-			sourceTree = "<group>";
-		};
 		76AD0D942010DFED00C99F19 = {
 			isa = PBXGroup;
 			children = (
@@ -111,7 +104,6 @@
 				76AD0DA02010DFEE00C99F19 /* AppDelegate.swift */,
 				76AD0DA72010DFEE00C99F19 /* Assets.xcassets */,
 				7650E6482017708F00005F12 /* Data */,
-				7650E6552018BEF200005F12 /* DI */,
 				76AD0DAC2010DFEE00C99F19 /* Info.plist */,
 				76AD0DA92010DFEE00C99F19 /* LaunchScreen.storyboard */,
 				76AD0DA42010DFEE00C99F19 /* Main.storyboard */,
@@ -142,7 +134,6 @@
 				76AD0D9A2010DFEE00C99F19 /* Frameworks */,
 				76AD0D9B2010DFEE00C99F19 /* Resources */,
 				DD7FBE920F830007E72E96D2 /* [CP] Embed Pods Frameworks */,
-				6E108E7B3B4BC3B1334D8AEF /* [CP] Copy Pods Resources */,
 				76F871E52010E53E00DA9D0B /* Lint Code */,
 			);
 			buildRules = (
@@ -202,21 +193,6 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		6E108E7B3B4BC3B1334D8AEF /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "[CP] Copy Pods Resources";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-MVVM/Pods-MVVM-resources.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
 		76F871E52010E53E00DA9D0B /* Lint Code */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -255,7 +231,7 @@
 			files = (
 			);
 			inputPaths = (
-				"${SRCROOT}/Pods/Target Support Files/Pods-MVVM/Pods-MVVM-frameworks.sh",
+				"${PODS_ROOT}/Target Support Files/Pods-MVVM/Pods-MVVM-frameworks.sh",
 				"${BUILT_PRODUCTS_DIR}/Alamofire/Alamofire.framework",
 				"${BUILT_PRODUCTS_DIR}/Realm/Realm.framework",
 				"${BUILT_PRODUCTS_DIR}/RealmSwift/RealmSwift.framework",
@@ -274,7 +250,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-MVVM/Pods-MVVM-frameworks.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-MVVM/Pods-MVVM-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */

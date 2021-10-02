@@ -27,13 +27,13 @@
 #import "RLMSwiftSupport.h"
 #import "RLMUtil.hpp"
 
-#import "object_store.hpp"
-#import "schema.hpp"
-
 #import <realm/group.hpp>
+#import <realm/object-store/object_schema.hpp>
+#import <realm/object-store/object_store.hpp>
+#import <realm/object-store/schema.hpp>
 
+#import <mutex>
 #import <objc/runtime.h>
-#include <mutex>
 
 using namespace realm;
 
@@ -83,7 +83,7 @@ static RLMObjectSchema *RLMRegisterClass(Class cls) {
     RLMObjectSchema *schema = [RLMObjectSchema schemaForObjectClass:cls];
     s_sharedSchemaState = prevState;
 
-    // set unmanaged class on shared shema for unmanaged object creation
+    // set unmanaged class on shared schema for unmanaged object creation
     schema.unmanagedClass = RLMUnmanagedAccessorClassForObjectClass(schema.objectClass, schema);
 
     // override sharedSchema class methods for performance
@@ -102,6 +102,9 @@ static void RLMRegisterClassLocalNames(Class *classes, NSUInteger count) {
     for (NSUInteger i = 0; i < count; i++) {
         Class cls = classes[i];
         if (!RLMIsObjectSubclass(cls)) {
+            continue;
+        }
+        if ([cls _realmIgnoreClass]) {
             continue;
         }
 
@@ -217,6 +220,11 @@ static void RLMRegisterClassLocalNames(Class *classes, NSUInteger count) {
         // We create instances of Swift objects during schema init, and they
         // obviously need to not also try to initialize the schema
         if (s_sharedSchemaState == SharedSchemaState::Initializing) {
+            return nil;
+        }
+        // Don't register the base classes in the schema even if someone calls
+        // sharedSchema on them directly
+        if (cls == [RLMObjectBase class] || class_getSuperclass(cls) == [RLMObjectBase class]) {
             return nil;
         }
 
@@ -351,8 +359,21 @@ static void RLMRegisterClassLocalNames(Class *classes, NSUInteger count) {
         std::vector<realm::ObjectSchema> schema;
         schema.reserve(_objectSchemaByName.count);
         [_objectSchemaByName enumerateKeysAndObjectsUsingBlock:[&](NSString *, RLMObjectSchema *objectSchema, BOOL *) {
-            schema.push_back(objectSchema.objectStoreCopy);
+            schema.push_back([objectSchema objectStoreCopy:self]);
         }];
+
+        // Having both obj-c and Swift classes for the same tables results in
+        // duplicate ObjectSchemas that we need to filter out
+        std::sort(begin(schema), end(schema), [](auto&& a, auto&& b) { return a.name < b.name; });
+        schema.erase(std::unique(begin(schema), end(schema), [](auto&& a, auto&& b) {
+            if (a.name == b.name) {
+                // If we make _realmObjectName public this needs to be turned into an exception
+                REALM_ASSERT_DEBUG(a.persisted_properties == b.persisted_properties);
+                return true;
+            }
+            return false;
+        }), end(schema));
+
         _objectStoreSchema = std::move(schema);
     }
     return _objectStoreSchema;

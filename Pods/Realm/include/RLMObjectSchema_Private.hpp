@@ -18,11 +18,18 @@
 
 #import "RLMObjectSchema_Private.h"
 
-#import "object_schema.hpp"
+#import <string>
+
+namespace realm {
+    class ObjectSchema;
+}
+@class RLMSchema;
 
 @interface RLMObjectSchema ()
+- (std::string const&) objectStoreName;
+
 // create realm::ObjectSchema copy
-- (realm::ObjectSchema)objectStoreCopy;
+- (realm::ObjectSchema)objectStoreCopy:(RLMSchema *)schema;
 
 // initialize with realm::ObjectSchema
 + (instancetype)objectSchemaForObjectStoreSchema:(realm::ObjectSchema const&)objectSchema;
