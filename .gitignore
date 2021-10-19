@@ -1,6 +1,4 @@
 # Xcode
-#
-# gitignore contributors: remember to update Global/Xcode.gitignore, Objective-C.gitignore & Swift.gitignore
 
 ## Build generated
 build/
@@ -28,5 +26,5 @@ xcuserdata/
 *.dSYM.zip
 *.dSYM
 
-## Pods
-Pods/
+## Mac
+.DS_Store
