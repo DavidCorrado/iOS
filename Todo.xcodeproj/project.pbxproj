@@ -18,6 +18,7 @@
 		76AD0DA82010DFEE00C99F19 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 76AD0DA72010DFEE00C99F19 /* Assets.xcassets */; };
 		76ED0186271E74390005312D /* TodoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76ED0185271E74390005312D /* TodoApp.swift */; };
 		76ED0189271E769D0005312D /* TaskListScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76ED0188271E769C0005312D /* TaskListScreen.swift */; };
+		76ED018E271E7D210005312D /* TaskScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76ED018D271E7D210005312D /* TaskScreen.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -32,6 +33,7 @@
 		76AD0DAC2010DFEE00C99F19 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		76ED0185271E74390005312D /* TodoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodoApp.swift; sourceTree = "<group>"; };
 		76ED0188271E769C0005312D /* TaskListScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskListScreen.swift; sourceTree = "<group>"; };
+		76ED018D271E7D210005312D /* TaskScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskScreen.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -57,11 +59,9 @@
 		7650E6482017708F00005F12 /* Data */ = {
 			isa = PBXGroup;
 			children = (
-				7650E649201770A500005F12 /* Task.swift */,
+				76ED018B271E795E0005312D /* Task */,
+				76ED018A271E79430005312D /* DB */,
 				7650E64B201774DD00005F12 /* Repository.swift */,
-				7650E64D201778DF00005F12 /* TaskRepository.swift */,
-				7650E64F2017799D00005F12 /* TaskDatabaseRepository.swift */,
-				7650E6582018CA3000005F12 /* RealmTask.swift */,
 			);
 			path = Data;
 			sourceTree = "<group>";
@@ -69,6 +69,7 @@
 		7650E6542018BED500005F12 /* UI */ = {
 			isa = PBXGroup;
 			children = (
+				76ED018C271E7CEC0005312D /* Task */,
 				76ED0185271E74390005312D /* TodoApp.swift */,
 				76ED0187271E76370005312D /* Tasks */,
 			);
@@ -110,6 +111,32 @@
 				76ED0188271E769C0005312D /* TaskListScreen.swift */,
 			);
 			path = Tasks;
+			sourceTree = "<group>";
+		};
+		76ED018A271E79430005312D /* DB */ = {
+			isa = PBXGroup;
+			children = (
+				7650E6582018CA3000005F12 /* RealmTask.swift */,
+			);
+			path = DB;
+			sourceTree = "<group>";
+		};
+		76ED018B271E795E0005312D /* Task */ = {
+			isa = PBXGroup;
+			children = (
+				7650E64D201778DF00005F12 /* TaskRepository.swift */,
+				7650E64F2017799D00005F12 /* TaskDatabaseRepository.swift */,
+				7650E649201770A500005F12 /* Task.swift */,
+			);
+			path = Task;
+			sourceTree = "<group>";
+		};
+		76ED018C271E7CEC0005312D /* Task */ = {
+			isa = PBXGroup;
+			children = (
+				76ED018D271E7D210005312D /* TaskScreen.swift */,
+			);
+			path = Task;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -212,6 +239,7 @@
 				76ED0186271E74390005312D /* TodoApp.swift in Sources */,
 				7650E6572018BF4600005F12 /* TasksViewModel.swift in Sources */,
 				7650E64A201770A500005F12 /* Task.swift in Sources */,
+				76ED018E271E7D210005312D /* TaskScreen.swift in Sources */,
 				76ED0189271E769D0005312D /* TaskListScreen.swift in Sources */,
 				7650E64C201774DD00005F12 /* Repository.swift in Sources */,
 				7650E6592018CA3000005F12 /* RealmTask.swift in Sources */,

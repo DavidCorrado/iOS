@@ -14,10 +14,12 @@ TODO
 * Swift Gen
 * Fastlane
 * Github action vs Xcode Server
-* Document Xcode version needed
+* Document Xcode version needed?
 * Dark Mode
 * Rxswift vs Combine
 * Async/Await vs...
+* Accessibility
+* Localization
 
 ## Auto Format
 brew install --cask swiftformat-for-xcode

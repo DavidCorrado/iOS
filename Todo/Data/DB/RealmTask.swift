@@ -10,7 +10,7 @@ import Foundation
 import RealmSwift
 
 class RealmTask: Object {
-    @objc dynamic var identifer = UUID().uuidString
+    @objc dynamic var id = UUID().uuidString
     @objc dynamic var title: String = ""
     @objc dynamic var detail: String = ""
 
@@ -25,7 +25,7 @@ class RealmTask: Object {
     }
 
     var entity: Task {
-        return Task(identifer: 0, title: title,
+        return Task(id: 0, title: title,
                     detail: detail)
     }
 }

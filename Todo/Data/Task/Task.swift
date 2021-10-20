@@ -8,8 +8,8 @@
 
 import Foundation
 
-struct Task {
-    let identifer: Int
+struct Task: Identifiable {
+    let id: Int
     let title: String
     let detail: String
 }
