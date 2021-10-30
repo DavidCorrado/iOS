@@ -7,19 +7,24 @@
 //
 
 import Foundation
+import RealmSwift
 
-class TaskViewModel {
-    let taskRepo: TaskRepository
-    init(taskRepo: TaskRepository = TaskRepository() ) {
-        self.taskRepo = taskRepo
+class TasksViewModel: ObservableObject {
+    private let taskRepo: TaskRepository
+    @Published var tasks: [Task] = []
+    private var token: NotificationToken?
+    private let realm = try! Realm()
+    init() {
+        self.taskRepo = TaskRepository(realm: realm)
+        setupObserver()
     }
 
-    func getTasks() -> [Task] {
-        return taskRepo.findAll()
-    }
+    private func setupObserver() {
+        let results = realm.objects(RealmTask.self)
 
-    func getTask(identifier: Int) -> Task? {
-        return taskRepo.find(identifer: identifier)
+        token = results.observe { [weak self] _ in
+            self?.tasks = results.map(Task.init)
+        }
     }
 
     func saveTask(task: Task) {

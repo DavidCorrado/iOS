@@ -7,17 +7,25 @@
 //
 
 import Foundation
+import RealmSwift
 
-class TaskRepository: Repository {
-    func find(identifer: Int) -> Task? {
-        return Task(id: 1, title: "", detail: "")
+class TaskRepository {
+    private let realm: Realm
+    init(realm: Realm) {
+        self.realm = realm
     }
 
-    func findAll() -> [Task] {
-        return []
+    func save(data: Task) {
+        try! realm.write {
+            realm.add(RealmTask(task: data), update: .modified)
+        }
     }
 
-    func save(data: Task) {}
-
-    func delete(data: Task) {}
+    func delete(data: Task) {
+        try! realm.write {
+            if let realmTask = realm.object(ofType: RealmTask.self, forPrimaryKey: data.id) {
+                realm.delete(realmTask)
+            }
+        }
+    }
 }

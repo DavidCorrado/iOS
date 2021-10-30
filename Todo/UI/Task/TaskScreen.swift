@@ -9,9 +9,29 @@
 import SwiftUI
 
 struct TaskScreen: View {
-    var task: Task
+    var taskId: Int?
+    @State var title: String
+    @State var detail: String
+    @EnvironmentObject var taskViewModel: TasksViewModel
+    @Environment(\.presentationMode) var presentation
     var body: some View {
-        Text(task.detail)
-            .navigationBarTitle(task.title, displayMode: .inline)
+        VStack {
+            TextField("Title", text: $title)
+            TextField("Detail", text: $detail)
+        }
+        .navigationBarTitle("ToDo Details", displayMode: .inline)
+        .navigationBarItems(trailing:
+            HStack {
+                Button("Save") {
+                    taskViewModel.saveTask(task: Task(id: taskId ?? UUID().hashValue, title: title, detail: detail))
+                    self.presentation.wrappedValue.dismiss()
+                }
+                if let taskId = taskId {
+                    Button("Delete") {
+                        taskViewModel.deleteTask(task: Task(id: taskId, title: title, detail: detail))
+                        self.presentation.wrappedValue.dismiss()
+                    }
+                }
+            })
     }
 }

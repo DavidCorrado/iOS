@@ -10,9 +10,7 @@
 		763580CC271E658900F07DD4 /* Realm in Frameworks */ = {isa = PBXBuildFile; productRef = 763580CB271E658900F07DD4 /* Realm */; };
 		763580CE271E658900F07DD4 /* RealmSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 763580CD271E658900F07DD4 /* RealmSwift */; };
 		7650E64A201770A500005F12 /* Task.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7650E649201770A500005F12 /* Task.swift */; };
-		7650E64C201774DD00005F12 /* Repository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7650E64B201774DD00005F12 /* Repository.swift */; };
 		7650E64E201778DF00005F12 /* TaskRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7650E64D201778DF00005F12 /* TaskRepository.swift */; };
-		7650E6502017799D00005F12 /* TaskDatabaseRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7650E64F2017799D00005F12 /* TaskDatabaseRepository.swift */; };
 		7650E6572018BF4600005F12 /* TasksViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7650E6562018BF4600005F12 /* TasksViewModel.swift */; };
 		7650E6592018CA3000005F12 /* RealmTask.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7650E6582018CA3000005F12 /* RealmTask.swift */; };
 		76AD0DA82010DFEE00C99F19 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 76AD0DA72010DFEE00C99F19 /* Assets.xcassets */; };
@@ -23,9 +21,7 @@
 
 /* Begin PBXFileReference section */
 		7650E649201770A500005F12 /* Task.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Task.swift; sourceTree = "<group>"; };
-		7650E64B201774DD00005F12 /* Repository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Repository.swift; sourceTree = "<group>"; };
 		7650E64D201778DF00005F12 /* TaskRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskRepository.swift; sourceTree = "<group>"; };
-		7650E64F2017799D00005F12 /* TaskDatabaseRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskDatabaseRepository.swift; sourceTree = "<group>"; };
 		7650E6562018BF4600005F12 /* TasksViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TasksViewModel.swift; sourceTree = "<group>"; };
 		7650E6582018CA3000005F12 /* RealmTask.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealmTask.swift; sourceTree = "<group>"; };
 		76AD0D9D2010DFEE00C99F19 /* Todo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Todo.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -61,7 +57,6 @@
 			children = (
 				76ED018B271E795E0005312D /* Task */,
 				76ED018A271E79430005312D /* DB */,
-				7650E64B201774DD00005F12 /* Repository.swift */,
 			);
 			path = Data;
 			sourceTree = "<group>";
@@ -125,7 +120,6 @@
 			isa = PBXGroup;
 			children = (
 				7650E64D201778DF00005F12 /* TaskRepository.swift */,
-				7650E64F2017799D00005F12 /* TaskDatabaseRepository.swift */,
 				7650E649201770A500005F12 /* Task.swift */,
 			);
 			path = Task;
@@ -235,13 +229,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				7650E6502017799D00005F12 /* TaskDatabaseRepository.swift in Sources */,
 				76ED0186271E74390005312D /* TodoApp.swift in Sources */,
 				7650E6572018BF4600005F12 /* TasksViewModel.swift in Sources */,
 				7650E64A201770A500005F12 /* Task.swift in Sources */,
 				76ED018E271E7D210005312D /* TaskScreen.swift in Sources */,
 				76ED0189271E769D0005312D /* TaskListScreen.swift in Sources */,
-				7650E64C201774DD00005F12 /* Repository.swift in Sources */,
 				7650E6592018CA3000005F12 /* RealmTask.swift in Sources */,
 				7650E64E201778DF00005F12 /* TaskRepository.swift in Sources */,
 			);

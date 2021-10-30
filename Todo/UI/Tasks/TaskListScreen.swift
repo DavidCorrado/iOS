@@ -9,21 +9,22 @@
 import SwiftUI
 
 struct TaskListScreen: View {
-    @State var tasks = [
-        Task(id: 1, title: "Task 1", detail: "Detail 1"),
-        Task(id: 2, title: "Task 2", detail: "Detail 2"),
-        Task(id: 3, title: "Task 3", detail: "Detail 3")
-    ]
+    @EnvironmentObject var taskViewModel: TasksViewModel
     var body: some View {
         NavigationView {
-            List(tasks, id: \.id) { task in
-                NavigationLink(destination: TaskScreen(task: task)) {
+            List(taskViewModel.tasks, id: \.id) { task in
+                NavigationLink(destination: TaskScreen(taskId: task.id, title: task.title, detail: task.detail)) {
                     VStack {
                         Text(task.title)
                         Text(task.detail)
                     }
                 }
             }.navigationBarTitle("To Do", displayMode: .inline)
+                .navigationBarItems(trailing:
+                    NavigationLink(destination:
+                        TaskScreen(title: "", detail: "")) {
+                            Text("Add")
+                    })
         }.navigationViewStyle(.stack)
     }
 }

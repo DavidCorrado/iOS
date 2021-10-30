@@ -12,4 +12,16 @@ struct Task: Identifiable {
     let id: Int
     let title: String
     let detail: String
+
+    init(id: Int, title: String, detail: String) {
+        self.id = id
+        self.title = title
+        self.detail = detail
+    }
+
+    init(realmTask: RealmTask) {
+        self.id = realmTask.id
+        self.title = realmTask.title
+        self.detail = realmTask.detail
+    }
 }

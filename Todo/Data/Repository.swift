@@ -10,7 +10,7 @@ import Foundation
 
 protocol Repository {
     associatedtype RepositoryType
-    func find(identifer: Int) -> RepositoryType?
+    func find(id: Int) -> RepositoryType?
     func findAll() -> [RepositoryType]
     func save(data: RepositoryType)
     func delete(data: RepositoryType)
